@@ -32,12 +32,12 @@ public:
 
 
 class Vec3 {
-private:
+
+public:
     Real x;
     Real y;
     Real z;
 
-public:
     Vec3() {
         this->x = 0;
         this->y = 0;
