@@ -10,19 +10,25 @@ const Real PI = 3.141592653589793;
 
 
 Real square(Real x) {
-    // return x * x;
+    return x * x;
 }
 
 Real clamp(Real value, Real minVal, Real maxVal) {
-    // ограничение значения
+    if (value < minVal) {
+        return minVal;
+    }
+    if (value > maxVal) {
+        return maxVal;
+    }
+    return value;
 }
 
 bool isNearlyZero(Real x) {
-    // сравнение с EPSILON
+    return std::abs(x) <= EPSILON;
 }
 
 bool isNearlyEqual(Real a, Real b) {
-    // сравнение с EPSILON
+    return std::abs(a - b) <= EPSILON;
 }
 
 
@@ -65,9 +71,12 @@ struct Displacement {
 };
 
 
-// delta = b - a
-// distanceSq = |delta|^2
-Displacement computeDisplacement(const Vec3& a, const Vec3& b);
+Displacement computeDisplacement(const Vec3& a, const Vec3& b) {
+    Displacement result;
+    result.delta = b - a;
+    result.distanceSq = result.delta.lengthSq();
+    return result;
+}
 
 
 // минимальное расстояние с учётом "замкнутого мира"
