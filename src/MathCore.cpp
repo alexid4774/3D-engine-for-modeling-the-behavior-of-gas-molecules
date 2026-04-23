@@ -385,15 +385,19 @@ public:
                 std::cout << "\n";
             }
     }
-};
-
-
-// translation * rotation * scale
-Mat4 makeModelMatrix(
+        
+    // translation * rotation * scale    
+    
+    Mat4 makeModelMatrix(
     const Vec3& position,
     const Vec3& rotation,
     const Vec3& scale
-);
+    )
+    {
+        return this->scale(scale).rotationX(rotation.x).rotationY(rotation.y).rotationZ(rotation.z).translation(position);
+    }
+
+};
 
 
 class AABB {
