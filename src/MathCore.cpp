@@ -87,7 +87,7 @@ public:
     }
 
     Real length() const {
-        return sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
+        return std::sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
     }
 
     Real lengthSq() const {
@@ -227,25 +227,164 @@ public:
 };
 
 
-struct Mat4 {
-    Real m[16]; // можно column-major или row-major
+class Mat4 {
+
+
+public:
+    
+    Real m[4][4]; // можно column-major или row-major, первый индекс - строка, второй - столбец
 
     // --- создание ---
-    static Mat4 identity();
+    Mat4()
+    {
+        for (int i=0; i<4; i++)
+            for (int j=0; j<4; j++)
+                this->m[i][j]=Real(i==j);
+    }
+    
+    Mat4(Real mat[4][4])
+    {
+        for (int i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            this->m[i][j] = mat[i][j];
+    }
+    //--изменение кординаты--
+
+    void set_cord(Real g, int index_str, int index_stl)
+    {
+        this->m[index_str][index_stl]=g;
+    }
 
     // --- преобразования ---
-    static Mat4 translation(const Vec3& t);
-    static Mat4 scale(const Vec3& s);
+    
+    Mat4 translation(const Vec3& t)
+    {
+        this->m[0][3]+=t.x;
+        this->m[1][3]+=t.y;
+        this->m[2][3]+=t.z;
+        return *this;
+    }
+    
+    Mat4 scale(const Vec3& s)
+    {
+        for (int i=0; i<3; i++)
+            for (int j=0; j<3; j++)
+            {
+                if (i==0)
+                    this->m[i][j]*=s.x;
+                if (i==1)
+                    this->m[i][j]*=s.y;
+                if (i==2)
+                    this->m[i][j]*=s.z;
+            }
+        return *this;
+    }
 
-    static Mat4 rotationX(Real angle);
-    static Mat4 rotationY(Real angle);
-    static Mat4 rotationZ(Real angle);
-
-    static Mat4 perspective(Real fov, Real aspect, Real near, Real far);
-    static Mat4 lookAt(const Vec3& eye, const Vec3& target, const Vec3& up);
+    Mat4 rotationX(Real angle)
+    {
+        Real a[2][2];
+        a[0][0]=this->m[1][1];
+        a[0][1]=this->m[1][2];
+        a[1][0]=this->m[2][1];
+        a[1][1]=this->m[2][2];
+        this->m[1][1]=a[0][0]*std::cos(angle)-a[0][1]*std::sin(angle);
+        this->m[1][2]=a[0][0]*std::sin(angle)+a[0][1]*std::cos(angle);
+        this->m[2][1]=a[1][0]*std::cos(angle)-a[1][1]*std::sin(angle);
+        this->m[2][2]=a[1][0]*std::sin(angle)+a[1][1]*std::cos(angle);
+        return *this;
+    }
+    
+    Mat4 rotationY(Real angle)
+    {
+        Real a[2][2];
+        a[0][0]=this->m[0][0];
+        a[0][1]=this->m[0][2];
+        a[1][0]=this->m[2][0];
+        a[1][1]=this->m[2][2];
+        this->m[0][0]=a[0][0]*std::cos(angle)+a[0][1]*std::sin(angle);
+        this->m[0][2]=-a[0][0]*std::sin(angle)+a[0][1]*std::cos(angle);
+        this->m[2][0]=a[1][0]*std::cos(angle)+a[1][1]*std::sin(angle);
+        this->m[2][2]=-a[1][0]*std::sin(angle)+a[1][1]*std::cos(angle);
+        return *this;
+    }
+    
+    Mat4 rotationZ(Real angle)
+    {
+        Real a[2][2];
+        a[0][0]=this->m[0][0];
+        a[0][1]=this->m[0][1];
+        a[1][0]=this->m[1][0];
+        a[1][1]=this->m[1][1];
+        this->m[0][0]=a[0][0]*std::cos(angle)-a[0][1]*std::sin(angle);
+        this->m[0][1]=+a[0][0]*std::sin(angle)+a[0][1]*std::cos(angle);
+        this->m[1][0]=a[1][0]*std::cos(angle)-a[1][1]*std::sin(angle);
+        this->m[1][1]=+a[1][0]*std::sin(angle)+a[1][1]*std::cos(angle);
+        return *this;
+    }
 
     // --- операции ---
-    Mat4 operator*(const Mat4& other) const;
+    
+    Mat4 operator*(const Mat4& other) const
+    {
+        Mat4 matrix=Mat4();
+        for (int i=0; i<4; i++)
+            for (int j=0; j<4; j++)
+            {
+                Real summ=0.0;
+                for (int k=0; k<4; k++)
+                    summ+=this->m[i][k]*other.m[k][j];
+                matrix.m[i][j]=summ;
+            }
+        return matrix;
+    }
+
+    // --- преобразования 2---
+
+    Mat4 perspective(Real fov, Real aspect, Real near, Real far)
+    {
+        if (Math::isNearlyZero(fov/2))
+            throw std::runtime_error("ZeroDivision (fov)");
+        if (Math::isNearlyEqual(near, far))
+            throw std::runtime_error("ZeroDivision (near=far)");
+        Real f=1/std::tan(fov/2);
+        Real matr[4][4] = {
+            {f/aspect, 0,0,0},
+            {0,f,0,0},
+            {0,0,(far+near)/(near-far),2*far*near/(near-far)},
+            {0,0,-1,0}
+            };
+        Mat4 matrix=Mat4(matr);
+        *this=matrix*(*this);
+        return *this;
+    }
+    
+    Mat4 lookAt(const Vec3& eye, const Vec3& target, const Vec3& up)
+    {
+        Vec3 forward = (target - eye).normalized();     
+        Vec3 right = Vec3::cross(up, forward).normalized();   
+        Vec3 up_new = Vec3::cross(forward, right);            
+        Real matr[4][4] = {
+            { right.x,    right.y,    right.z,    -Vec3::dot(right, eye)    },
+            { up_new.x,   up_new.y,   up_new.z,   -Vec3::dot(up_new, eye)   },
+            {-forward.x, -forward.y, -forward.z,    Vec3::dot(forward, eye)  },
+            { 0,          0,          0,           1                   }
+        };
+        Mat4 matrix(matr);
+        *this = matrix * (*this);
+        return *this;
+    }
+    
+//вывод
+    
+    void print() const 
+    {
+        for (int i = 0; i < 4; i++) 
+            {
+                for (int j = 0; j < 4; j++)
+                    std::cout << m[i][j] << " ";
+                std::cout << "\n";
+            }
+    }
 };
 
 
