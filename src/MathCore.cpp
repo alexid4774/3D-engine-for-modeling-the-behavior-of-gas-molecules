@@ -1,6 +1,7 @@
+#include <stdexcept>
+#include <iostream>
 #include <cmath>
 #include <cassert>
-#include <iostream>
 
 using Real = double;
 
@@ -31,36 +32,106 @@ bool isNearlyEqual(Real a, Real b) {
     return std::abs(a - b) <= EPSILON;
 }
 
-
-struct Vec3 {
+class Vec3 {
+public:
     Real x;
     Real y;
     Real z;
 
 
-    Vec3();
-    Vec3(Real x_, Real y_, Real z_);
-    Vec3 operator+(const Vec3& other) const;
-    Vec3 operator-(const Vec3& other) const;
-    Vec3 operator*(Real scalar) const;
-    Vec3 operator/(Real scalar) const;
+    Vec3()
+    {
+        this->x=0;
+        this->y=0;
+        this->z=0;
+    }
+    Vec3(Real x_, Real y_, Real z_)
+    {
+        this->x=x_;
+        this->y=y_;
+        this->z=z_;
+    }
+    Vec3 operator+(const Vec3& other) const
+    {
+        Vec3 v=Vec3(this->x+other.x, this->y+other.y, this->z+other.z);
+        return v;
+    }
+    Vec3 operator-(const Vec3& other) const
+    {
+        Vec3 v=Vec3(this->x-other.x, this->y-other.y, this->z-other.z);
+        return v;
+    }
+    Vec3 operator*(Real scalar) const
+    {
+        Vec3 v=Vec3(this->x*scalar, this->y*scalar, this->z*scalar);
+        return v;
+    }
+    Vec3 operator/(Real scalar) const
+    {
+        if (isNearlyZero(scalar))
+            throw std::runtime_error("ZeroDivision");
+        Vec3 v=Vec3(this->x/scalar, this->y/scalar, this->z/scalar);
+        return v;
+    }
 
-    Vec3& operator+=(const Vec3& other);
-    Vec3& operator-=(const Vec3& other);
+    Vec3& operator+=(const Vec3& other)
+    {
+        this->x+=other.x;
+        this->y+=other.y;
+        this->z+=other.z;
+        return *this;
+    }
+    Vec3& operator-=(const Vec3& other)
+    {
+        this->x-=other.x;
+        this->y-=other.y;
+        this->z-=other.z;
+        return *this;
+    }
 
-    Real length() const;
-    Real lengthSq() const;
+    Real length() const
+    {
+        return sqrt(this->x*this->x+this->y*this->y+this->z*this->z);
+    }
+    Real lengthSq() const
+    {
+        return (this->x*this->x+this->y*this->y+this->z*this->z);
+    }
 
-    Vec3 normalized() const;
-    void normalize();
+    bool isZero() const
+    {
+        return isNearlyZero(this->length());
+    }
+    Vec3 normalized() const
+    {
+        if (this->isZero())
+            return *this;
+        Vec3 v=*this/this->length();
+        return v;
+    }
+    void normalize()
+        {
+            if (!(this->isZero()))
+                *this=*this/this->length();
+        }
 
-    bool isZero() const;
-    bool isFinite() const;
-
-    static Real dot(const Vec3& a, const Vec3& b);
-    static Vec3 cross(const Vec3& a, const Vec3& b);
-    static Real distance(const Vec3& a, const Vec3& b);
-    static Real distanceSq(const Vec3& a, const Vec3& b);
+    static Real dot(const Vec3& a, const Vec3& b)
+    {
+        return (a.x*b.x+a.y*b.y+a.z*b.z);
+    }
+    static Vec3 cross(const Vec3& a, const Vec3& b)
+    {
+        Vec3 v=Vec3(a.y*b.z-a.z*b.y, -a.x*b.z+a.z*b.x, a.x*b.y-a.y*b.x);
+        return v;
+    }
+    static Real distance(const Vec3& a, const Vec3& b)
+    {
+        return (a-b).length();
+    }
+    static Real distanceSq(const Vec3& a, const Vec3& b)
+    {
+        return (a-b).lengthSq();
+    }
 };
 
 
