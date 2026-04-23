@@ -5,162 +5,226 @@
 
 using Real = double;
 
-const Real EPSILON = 1e-9;
-const Real SMALL_VALUE = 1e-12;
-const Real PI = 3.141592653589793;
+class Math {
+public:
+    static constexpr Real EPSILON = 1e-9;
+    static constexpr Real SMALL_VALUE = 1e-12;
+    static constexpr Real PI = 3.141592653589793;
 
+    static Real square(Real x) { return x * x; }
 
-Real square(Real x) {
-    return x * x;
-}
+    static Real clamp(Real value, Real minVal, Real maxVal) {
+        if (value < minVal) {
+            return minVal;
+        }
 
-Real clamp(Real value, Real minVal, Real maxVal) {
-    if (value < minVal) {
-        return minVal;
+        if (value > maxVal) {
+            return maxVal;
+        }
+
+        return value;
     }
-    if (value > maxVal) {
-        return maxVal;
-    }
-    return value;
-}
 
-bool isNearlyZero(Real x) {
-    return std::abs(x) <= EPSILON;
-}
+    static bool isNearlyZero(Real x) { return std::abs(x) <= EPSILON; }
 
-bool isNearlyEqual(Real a, Real b) {
-    return std::abs(a - b) <= EPSILON;
-}
+    static bool isNearlyEqual(Real a, Real b) { return std::abs(a - b) <= EPSILON; }
+};
+
 
 class Vec3 {
-public:
+private:
     Real x;
     Real y;
     Real z;
 
+public:
+    Vec3() {
+        this->x = 0;
+        this->y = 0;
+        this->z = 0;
+    }
 
-    Vec3()
-    {
-        this->x=0;
-        this->y=0;
-        this->z=0;
+    Vec3(Real x_, Real y_, Real z_) {
+        this->x = x_;
+        this->y = y_;
+        this->z = z_;
     }
-    Vec3(Real x_, Real y_, Real z_)
-    {
-        this->x=x_;
-        this->y=y_;
-        this->z=z_;
+
+    Real getX() const { return x; }
+    Real getY() const { return y; }
+    Real getZ() const { return z; }
+
+    Vec3 operator+(const Vec3& other) const {
+        return Vec3(this->x + other.x, this->y + other.y, this->z + other.z);
     }
-    Vec3 operator+(const Vec3& other) const
-    {
-        Vec3 v=Vec3(this->x+other.x, this->y+other.y, this->z+other.z);
-        return v;
+
+    Vec3 operator-(const Vec3& other) const {
+        return Vec3(this->x - other.x, this->y - other.y, this->z - other.z);
     }
-    Vec3 operator-(const Vec3& other) const
-    {
-        Vec3 v=Vec3(this->x-other.x, this->y-other.y, this->z-other.z);
-        return v;
+
+    Vec3 operator*(Real scalar) const {
+        return Vec3(this->x * scalar, this->y * scalar, this->z * scalar);
     }
-    Vec3 operator*(Real scalar) const
-    {
-        Vec3 v=Vec3(this->x*scalar, this->y*scalar, this->z*scalar);
-        return v;
-    }
-    Vec3 operator/(Real scalar) const
-    {
-        if (isNearlyZero(scalar))
+
+    Vec3 operator/(Real scalar) const {
+        if (Math::isNearlyZero(scalar))
             throw std::runtime_error("ZeroDivision");
-        Vec3 v=Vec3(this->x/scalar, this->y/scalar, this->z/scalar);
-        return v;
+        return Vec3(this->x / scalar, this->y / scalar, this->z / scalar);
     }
 
-    Vec3& operator+=(const Vec3& other)
-    {
-        this->x+=other.x;
-        this->y+=other.y;
-        this->z+=other.z;
-        return *this;
-    }
-    Vec3& operator-=(const Vec3& other)
-    {
-        this->x-=other.x;
-        this->y-=other.y;
-        this->z-=other.z;
+    Vec3& operator+=(const Vec3& other) {
+        this->x += other.x;
+        this->y += other.y;
+        this->z += other.z;
         return *this;
     }
 
-    Real length() const
-    {
-        return sqrt(this->x*this->x+this->y*this->y+this->z*this->z);
-    }
-    Real lengthSq() const
-    {
-        return (this->x*this->x+this->y*this->y+this->z*this->z);
+    Vec3& operator-=(const Vec3& other) {
+        this->x -= other.x;
+        this->y -= other.y;
+        this->z -= other.z;
+        return *this;
     }
 
-    bool isZero() const
-    {
-        return isNearlyZero(this->length());
+    Real length() const {
+        return sqrt(this->x * this->x + this->y * this->y + this->z * this->z);
     }
-    Vec3 normalized() const
-    {
+
+    Real lengthSq() const {
+        return (this->x * this->x + this->y * this->y + this->z * this->z);
+    }
+
+    bool isZero() const {
+        return Math::isNearlyZero(this->length());
+    }
+
+    Vec3 normalized() const {
         if (this->isZero())
             return *this;
-        Vec3 v=*this/this->length();
-        return v;
+        return *this/this->length();
     }
-    void normalize()
-        {
-            if (!(this->isZero()))
-                *this=*this/this->length();
-        }
 
-    static Real dot(const Vec3& a, const Vec3& b)
-    {
-        return (a.x*b.x+a.y*b.y+a.z*b.z);
+    void normalize() {
+            if (!(this->isZero()))
+                *this = *this / this->length();
     }
-    static Vec3 cross(const Vec3& a, const Vec3& b)
-    {
-        Vec3 v=Vec3(a.y*b.z-a.z*b.y, -a.x*b.z+a.z*b.x, a.x*b.y-a.y*b.x);
-        return v;
+
+    static Real dot(const Vec3& a, const Vec3& b) {
+        return (a.x * b.x + a.y * b.y + a.z * b.z);
     }
-    static Real distance(const Vec3& a, const Vec3& b)
-    {
-        return (a-b).length();
+
+    static Vec3 cross(const Vec3& a, const Vec3& b) {
+        return Vec3(a.y * b.z - a.z * b.y, -a.x * b.z + a.z * b.x, a.x * b.y - a.y * b.x);
     }
-    static Real distanceSq(const Vec3& a, const Vec3& b)
-    {
-        return (a-b).lengthSq();
+
+    static Real distance(const Vec3& a, const Vec3& b) {
+        return (a - b).length();
+    }
+
+    static Real distanceSq(const Vec3& a, const Vec3& b) {
+        return (a - b).lengthSq();
+    }
+
+    static Vec3 zero() {
+        return Vec3(0.0, 0.0, 0.0);
     }
 };
 
 
-// результат смещения
-struct Displacement {
+class Displacement {
+private:
     Vec3 delta;
     Real distanceSq;
+
+public:
+    Displacement() : delta(Vec3::zero()), distanceSq(0.0) {}
+
+    Displacement(const Vec3& delta_): delta(delta_), distanceSq(delta_.lengthSq()) {}
+
+    const Vec3& getDelta() const {
+        return delta;
+    }
+
+    Real getDistanceSquared() const {
+        return distanceSq;
+    }
+
+    Real getDistance() const {
+        return std::sqrt(distanceSq);
+    }
+
+    static Displacement between(const Vec3& from, const Vec3& to) {
+        return Displacement(to - from);
+    }
 };
 
 
-Displacement computeDisplacement(const Vec3& a, const Vec3& b) {
-    Displacement result;
-    result.delta = b - a;
-    result.distanceSq = result.delta.lengthSq();
-    return result;
-}
+class PeriodicBox {
+private:
+    Vec3 size;
 
+public:
+    PeriodicBox() : size(0.0, 0.0, 0.0) {}
 
-// минимальное расстояние с учётом "замкнутого мира"
-Real minimalImage(Real dx, Real boxSize);
+    PeriodicBox(const Vec3& boxSize) : size(boxSize) {}
 
-// применить к вектору
-Vec3 applyMinimalImage(const Vec3& delta, const Vec3& boxSize);
+    const Vec3& getSize() const {
+        return size;
+    }
 
-// вернуть координату в диапазон [0, boxSize)
-Real wrapCoordinate(Real value, Real boxSize);
+    void setSize(const Vec3& newSize) {
+        size = newSize;
+    }
 
-// вернуть позицию внутрь коробки
-Vec3 wrapPosition(const Vec3& pos, const Vec3& boxSize);
+    Real minimalImage1D(Real dx, Real boxLength) const {
+        if (boxLength <= 0.0) {
+            return dx;
+        }
+
+        Real half = 0.5 * boxLength;
+
+        if (dx > half) {
+            dx -= boxLength;
+        } else if (dx < -half) {
+            dx += boxLength;
+        }
+
+        return dx;
+    }
+
+    Vec3 applyMinimalImage(const Vec3& delta) const {
+        return Vec3(
+            minimalImage1D(delta.getX(), size.getX()),
+            minimalImage1D(delta.getY(), size.getY()),
+            minimalImage1D(delta.getZ(), size.getZ()));
+    }
+
+    Real wrapCoordinate(Real value, Real boxLength) const {
+        if (boxLength <= 0.0) {
+            return value;
+        }
+
+        value = std::fmod(value, boxLength);
+        if (value < 0.0) {
+            value += boxLength;
+        }
+
+        return value;
+    }
+
+    Vec3 wrapPosition(const Vec3& position) const {
+        return Vec3(
+            wrapCoordinate(position.getX(), size.getX()),
+            wrapCoordinate(position.getY(), size.getY()),
+            wrapCoordinate(position.getZ(), size.getZ()));
+    }
+
+    Displacement periodicDisplacement(const Vec3& from, const Vec3& to) const {
+        Vec3 rawDelta = to - from;
+        Vec3 correctedDelta = applyMinimalImage(rawDelta);
+        return Displacement(correctedDelta);
+    }
+};
 
 
 struct Mat4 {
@@ -193,28 +257,77 @@ Mat4 makeModelMatrix(
 );
 
 
-struct AABB {
-    Vec3 min;
-    Vec3 max;
+class AABB {
+private:
+    Vec3 minPoint;
+    Vec3 maxPoint;
 
-    Vec3 size() const;
-    Vec3 center() const;
-    bool contains(const Vec3& p) const;
+public:
+    AABB() : minPoint(Vec3::zero()), maxPoint(Vec3::zero()) {}
+
+    AABB(const Vec3& minP, const Vec3& maxP)
+        : minPoint(minP), maxPoint(maxP) {}
+
+    Vec3 getMin() const { return minPoint; }
+    Vec3 getMax() const { return maxPoint; }
+
+    Vec3 size() const {
+        return maxPoint - minPoint;
+    }
+
+    Vec3 center() const {
+        return (minPoint + maxPoint) * 0.5;
+    }
+
+    bool contains(const Vec3& p) const {
+        return p.getX() >= minPoint.getX() && p.getX() <= maxPoint.getX() &&
+               p.getY() >= minPoint.getY() && p.getY() <= maxPoint.getY() &&
+               p.getZ() >= minPoint.getZ() && p.getZ() <= maxPoint.getZ();
+    }
 };
-
-
-void printVec3(const Vec3& v) {
-    std::cout << "(" << v.x << ", " << v.y << ", " << v.z << ")\n";
-}
 
 
 
 int main() {
-    // протестировать:
-    // - Vec3
-    // - distance
-    // - normalization
-    // - periodic boundary
+    Vec3 a(1.0, 2.0, 3.0);
+    Vec3 b(4.0, 6.0, 3.0);
+
+    std::cout << "a = ";
+    a.print();
+    std::cout << "\n";
+
+    std::cout << "b = ";
+    b.print();
+    std::cout << "\n";
+
+    Vec3 delta = b - a;
+    std::cout << "delta = ";
+    delta.print();
+    std::cout << "\n";
+
+    std::cout << "distanceSq = " << a.distanceSquaredTo(b) << "\n";
+    std::cout << "distance = " << a.distanceTo(b) << "\n";
+
+    PeriodicBox box(Vector3(10.0, 10.0, 10.0));
+    Vec3 p1(0.5, 0.5, 0.5);
+    Vec3 p2(9.8, 0.5, 0.5);
+
+    Displacement pd = box.periodicDisplacement(p1, p2);
+
+    std::cout << "periodic delta = ";
+    pd.getDelta().print();
+    std::cout << "\n";
+
+    std::cout << "periodic distanceSq = " << pd.getDistanceSquared() << "\n";
+
+    Matrix4 model = Transform::makeModelMatrix(
+        Vec3(1.0, 2.0, 3.0),
+        Vec3(0.1, 0.2, 0.3),
+        Vec3(1.0, 1.0, 1.0)
+    );
+
+    std::cout << "model matrix:\n";
+    model.print();
 
     return 0;
 }
