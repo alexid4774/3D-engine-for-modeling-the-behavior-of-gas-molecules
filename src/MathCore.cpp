@@ -32,7 +32,6 @@ public:
 
 
 class Vec3 {
-
 public:
     Real x;
     Real y;
@@ -127,6 +126,9 @@ public:
 
     static Vec3 zero() {
         return Vec3(0.0, 0.0, 0.0);
+    }
+     void print() const {
+        std::cout << "(" << x << ", " << y << ", " << z << ")";
     }
 };
 
@@ -228,175 +230,183 @@ public:
 
 
 class Mat4 {
-
+private:
+    Real m[16]; // index = col * 4 + row
 
 public:
-    
-    Real m[4][4]; // можно column-major или row-major, первый индекс - строка, второй - столбец
-
-    // --- создание ---
-    Mat4()
-    {
-        for (int i=0; i<4; i++)
-            for (int j=0; j<4; j++)
-                this->m[i][j]=Real(i==j);
-    }
-    
-    Mat4(Real mat[4][4])
-    {
-        for (int i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            this->m[i][j] = mat[i][j];
-    }
-    //--изменение кординаты--
-
-    void set_cord(Real g, int index_str, int index_stl)
-    {
-        this->m[index_str][index_stl]=g;
+    Mat4() {
+        for (int i = 0; i < 16; i++) {
+            m[i] = 0.0;
+        }
     }
 
-    // --- преобразования ---
-    
-    Mat4 translation(const Vec3& t)
-    {
-        this->m[0][3]+=t.x;
-        this->m[1][3]+=t.y;
-        this->m[2][3]+=t.z;
-        return *this;
+    Real& at(int row, int col) {
+        return m[col * 4 + row];
     }
-    
-    Mat4 scale(const Vec3& s)
-    {
-        for (int i=0; i<3; i++)
-            for (int j=0; j<3; j++)
-            {
-                if (i==0)
-                    this->m[i][j]*=s.x;
-                if (i==1)
-                    this->m[i][j]*=s.y;
-                if (i==2)
-                    this->m[i][j]*=s.z;
+
+    const Real& at(int row, int col) const {
+        return m[col * 4 + row];
+    }
+
+    const Real* data() const {
+        return m;
+    }
+
+    Real* data() {
+        return m;
+    }
+
+    static Mat4 identity() {
+        Mat4 result;
+
+        result.at(0, 0) = 1.0;
+        result.at(1, 1) = 1.0;
+        result.at(2, 2) = 1.0;
+        result.at(3, 3) = 1.0;
+
+        return result;
+    }
+
+    static Mat4 translation(const Vec3& t) {
+        Mat4 result = identity();
+
+        result.at(0, 3) = t.x;
+        result.at(1, 3) = t.y;
+        result.at(2, 3) = t.z;
+
+        return result;
+    }
+
+    static Mat4 scale(const Vec3& s) {
+        Mat4 result = identity();
+
+        result.at(0, 0) = s.x;
+        result.at(1, 1) = s.y;
+        result.at(2, 2) = s.z;
+
+        return result;
+    }
+
+    static Mat4 rotationX(Real angle) {
+        Mat4 result = identity();
+        Real c = std::cos(angle);
+        Real s = std::sin(angle);
+
+        result.at(1, 1) = c;
+        result.at(1, 2) = -s;
+        result.at(2, 1) = s;
+        result.at(2, 2) = c;
+
+        return result;
+    }
+
+    static Mat4 rotationY(Real angle) {
+        Mat4 result = identity();
+        Real c = std::cos(angle);
+        Real s = std::sin(angle);
+
+        result.at(0, 0) = c;
+        result.at(0, 2) = s;
+        result.at(2, 0) = -s;
+        result.at(2, 2) = c;
+
+        return result;
+    }
+
+    static Mat4 rotationZ(Real angle) {
+        Mat4 result = identity();
+        Real c = std::cos(angle);
+        Real s = std::sin(angle);
+
+        result.at(0, 0) = c;
+        result.at(0, 1) = -s;
+        result.at(1, 0) = s;
+        result.at(1, 1) = c;
+
+        return result;
+    }
+
+    static Mat4 perspective(Real fov, Real aspect, Real nearPlane, Real farPlane) {
+        if (Math::isNearlyZero(aspect)) {
+            throw std::runtime_error("ZeroDivision (aspect)!");
+        }
+
+        if (Math::isNearlyZero(std::tan(fov * 0.5))) {
+            throw std::runtime_error("ZeroDivision (fov)!");
+        }
+
+        if (Math::isNearlyEqual(nearPlane, farPlane)) {
+            throw std::runtime_error("ZeroDivision (near = far)!");
+        }
+
+        Real tanHalfFov = std::tan(fov * 0.5);
+        Mat4 result;
+
+        result.at(0, 0) = 1.0 / (aspect * tanHalfFov);
+        result.at(1, 1) = 1.0 / tanHalfFov;
+        result.at(2, 2) = -(farPlane + nearPlane) / (farPlane - nearPlane);
+        result.at(2, 3) = -(2.0 * farPlane * nearPlane) / (farPlane - nearPlane);
+        result.at(3, 2) = -1.0;
+
+        return result;
+    }
+
+    static Mat4 lookAt(const Vec3& eye, const Vec3& target, const Vec3& up) {
+        Vec3 forward = (target - eye).normalized();
+        Vec3 right = Vec3::cross(forward, up).normalized();
+        Vec3 trueUp = Vec3::cross(right, forward);
+        Mat4 result = identity();
+
+        result.at(0, 0) = right.x;
+        result.at(1, 0) = right.y;
+        result.at(2, 0) = right.z;
+
+        result.at(0, 1) = trueUp.x;
+        result.at(1, 1) = trueUp.y;
+        result.at(2, 1) = trueUp.z;
+
+        result.at(0, 2) = -forward.x;
+        result.at(1, 2) = -forward.y;
+        result.at(2, 2) = -forward.z;
+
+        result.at(0, 3) = -Vec3::dot(right, eye);
+        result.at(1, 3) = -Vec3::dot(trueUp, eye);
+        result.at(2, 3) = Vec3::dot(forward, eye);
+
+        return result;
+    }
+
+    Mat4 operator*(const Mat4& other) const {
+        Mat4 result;
+
+        for (int row = 0; row < 4; row++) {
+            for (int col = 0; col < 4; col++) {
+                Real sum = 0.0;
+
+                for (int k = 0; k < 4; k++) {
+                    sum += this->at(row, k) * other.at(k, col);
+                }
+
+                result.at(row, col) = sum;
             }
-        return *this;
+        }
+
+        return result;
     }
 
-    Mat4 rotationX(Real angle)
-    {
-        Real a[2][2];
-        a[0][0]=this->m[1][1];
-        a[0][1]=this->m[1][2];
-        a[1][0]=this->m[2][1];
-        a[1][1]=this->m[2][2];
-        this->m[1][1]=a[0][0]*std::cos(angle)-a[0][1]*std::sin(angle);
-        this->m[1][2]=a[0][0]*std::sin(angle)+a[0][1]*std::cos(angle);
-        this->m[2][1]=a[1][0]*std::cos(angle)-a[1][1]*std::sin(angle);
-        this->m[2][2]=a[1][0]*std::sin(angle)+a[1][1]*std::cos(angle);
-        return *this;
-    }
-    
-    Mat4 rotationY(Real angle)
-    {
-        Real a[2][2];
-        a[0][0]=this->m[0][0];
-        a[0][1]=this->m[0][2];
-        a[1][0]=this->m[2][0];
-        a[1][1]=this->m[2][2];
-        this->m[0][0]=a[0][0]*std::cos(angle)+a[0][1]*std::sin(angle);
-        this->m[0][2]=-a[0][0]*std::sin(angle)+a[0][1]*std::cos(angle);
-        this->m[2][0]=a[1][0]*std::cos(angle)+a[1][1]*std::sin(angle);
-        this->m[2][2]=-a[1][0]*std::sin(angle)+a[1][1]*std::cos(angle);
-        return *this;
-    }
-    
-    Mat4 rotationZ(Real angle)
-    {
-        Real a[2][2];
-        a[0][0]=this->m[0][0];
-        a[0][1]=this->m[0][1];
-        a[1][0]=this->m[1][0];
-        a[1][1]=this->m[1][1];
-        this->m[0][0]=a[0][0]*std::cos(angle)-a[0][1]*std::sin(angle);
-        this->m[0][1]=+a[0][0]*std::sin(angle)+a[0][1]*std::cos(angle);
-        this->m[1][0]=a[1][0]*std::cos(angle)-a[1][1]*std::sin(angle);
-        this->m[1][1]=+a[1][0]*std::sin(angle)+a[1][1]*std::cos(angle);
-        return *this;
+    static Mat4 makeModelMatrix(const Vec3& position, const Vec3& rotation, const Vec3& scaleVec) {
+        return Mat4::translation(position) * Mat4::rotationZ(rotation.z) * 
+            Mat4::rotationY(rotation.y) * Mat4::rotationX(rotation.x) * Mat4::scale(scaleVec);
     }
 
-    // --- операции ---
-    
-    Mat4 operator*(const Mat4& other) const
-    {
-        Mat4 matrix=Mat4();
-        for (int i=0; i<4; i++)
-            for (int j=0; j<4; j++)
-            {
-                Real summ=0.0;
-                for (int k=0; k<4; k++)
-                    summ+=this->m[i][k]*other.m[k][j];
-                matrix.m[i][j]=summ;
+    void print() const {
+        for (int row = 0; row < 4; row++) {
+            for (int col = 0; col < 4; col++) {
+                std::cout << at(row, col) << " ";
             }
-        return matrix;
+            std::cout << "\n";
+        }
     }
-
-    // --- преобразования 2---
-
-    Mat4 perspective(Real fov, Real aspect, Real near, Real far)
-    {
-        if (Math::isNearlyZero(fov/2))
-            throw std::runtime_error("ZeroDivision (fov)");
-        if (Math::isNearlyEqual(near, far))
-            throw std::runtime_error("ZeroDivision (near=far)");
-        Real f=1/std::tan(fov/2);
-        Real matr[4][4] = {
-            {f/aspect, 0,0,0},
-            {0,f,0,0},
-            {0,0,(far+near)/(near-far),2*far*near/(near-far)},
-            {0,0,-1,0}
-            };
-        Mat4 matrix=Mat4(matr);
-        *this=matrix*(*this);
-        return *this;
-    }
-    
-    Mat4 lookAt(const Vec3& eye, const Vec3& target, const Vec3& up)
-    {
-        Vec3 forward = (target - eye).normalized();     
-        Vec3 right = Vec3::cross(up, forward).normalized();   
-        Vec3 up_new = Vec3::cross(forward, right);            
-        Real matr[4][4] = {
-            { right.x,    right.y,    right.z,    -Vec3::dot(right, eye)    },
-            { up_new.x,   up_new.y,   up_new.z,   -Vec3::dot(up_new, eye)   },
-            {-forward.x, -forward.y, -forward.z,    Vec3::dot(forward, eye)  },
-            { 0,          0,          0,           1                   }
-        };
-        Mat4 matrix(matr);
-        *this = matrix * (*this);
-        return *this;
-    }
-    
-//вывод
-    
-    void print() const 
-    {
-        for (int i = 0; i < 4; i++) 
-            {
-                for (int j = 0; j < 4; j++)
-                    std::cout << m[i][j] << " ";
-                std::cout << "\n";
-            }
-    }
-        
-    // translation * rotation * scale    
-    
-    Mat4 makeModelMatrix(
-    const Vec3& position,
-    const Vec3& rotation,
-    const Vec3& scale
-    )
-    {
-        return this->scale(scale).rotationX(rotation.x).rotationY(rotation.y).rotationZ(rotation.z).translation(position);
-    }
-
 };
 
 
@@ -408,8 +418,7 @@ private:
 public:
     AABB() : minPoint(Vec3::zero()), maxPoint(Vec3::zero()) {}
 
-    AABB(const Vec3& minP, const Vec3& maxP)
-        : minPoint(minP), maxPoint(maxP) {}
+    AABB(const Vec3& minP, const Vec3& maxP) : minPoint(minP), maxPoint(maxP) {}
 
     Vec3 getMin() const { return minPoint; }
     Vec3 getMax() const { return maxPoint; }
@@ -448,10 +457,10 @@ int main() {
     delta.print();
     std::cout << "\n";
 
-    std::cout << "distanceSq = " << a.distanceSquaredTo(b) << "\n";
-    std::cout << "distance = " << a.distanceTo(b) << "\n";
+    std::cout << "distanceSq = " << Vec3::distanceSq(a, b) << "\n";
+    std::cout << "distance = " << Vec3::distance(a, b) << "\n";
 
-    PeriodicBox box(Vector3(10.0, 10.0, 10.0));
+    PeriodicBox box(Vec3(10.0, 10.0, 10.0));
     Vec3 p1(0.5, 0.5, 0.5);
     Vec3 p2(9.8, 0.5, 0.5);
 
@@ -463,11 +472,7 @@ int main() {
 
     std::cout << "periodic distanceSq = " << pd.getDistanceSquared() << "\n";
 
-    Matrix4 model = Transform::makeModelMatrix(
-        Vec3(1.0, 2.0, 3.0),
-        Vec3(0.1, 0.2, 0.3),
-        Vec3(1.0, 1.0, 1.0)
-    );
+    Mat4 model = Mat4::makeModelMatrix(Vec3(1.0, 2.0, 3.0), Vec3(0.1, 0.2, 0.3), Vec3(1.0, 1.0, 1.0));
 
     std::cout << "model matrix:\n";
     model.print();
