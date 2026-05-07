@@ -1,7 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <random>
-#include "MathCore.cpp"
+#include "../include/MathCore.hpp"
+#include "../include/Integrator.hpp"
 
 
 std::mt19937 gen(42);
@@ -102,7 +103,7 @@ public:
                 double r2 = r.lengthSq();
 
                 // --- cutoff ---
-                if (r2 > cutoff2 || r2 == 0.0) continue;
+                if (r2 > cutoff2 || r2 < 1e-12) continue;
 
                 double inv_r2 = 1.0 / r2;
                 double inv_r6 = inv_r2 * inv_r2 * inv_r2;
@@ -123,7 +124,10 @@ public:
         }
     }
 
-    void integrate(double dt);
+    void integrate(double dt) {
+        VelocityVerletIntegrator v;
+        v.step(*this, dt);
+    }
 
 
     void applyBoundaries() {
@@ -145,7 +149,7 @@ public:
 
         this->boxSize = boxSize;
         this->particles = createParticles(count, mass, boxSize, v_max);
-        this->cutoff = boxSize * 0.99;
+        this->cutoff = boxSize / 2.0;
         this->epsilon = epsilon;
         this->sigma = sigma;
         this->mass = mass;
@@ -221,7 +225,7 @@ public:
                 double r2 = r.lengthSq();
 
                 // --- cutoff ---
-                if (r2 > cutoff2 || r2 == 0.0) continue;
+                if (r2 > cutoff2 || r2 < 1e-12) continue;
 
                 double inv_r2 = 1.0 / r2;
                 double inv_r6 = inv_r2 * inv_r2 * inv_r2;
@@ -241,9 +245,14 @@ public:
     }
 
     // --- Access ---
-    std::vector<Particle>& getParticles();
-    const std::vector<Particle>& getParticles() const;
+    std::vector<Particle>& getParticles() {
+        return this->particles;
+    }
+    const std::vector<Particle>& getParticles() const {
+        return this->particles;
+    }
 
-    // --- Utilities ---
-    int size() const;
+    int size() const {
+        return particles.size();
+    }
 };
