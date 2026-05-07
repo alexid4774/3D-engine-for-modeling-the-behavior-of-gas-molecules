@@ -1,8 +1,23 @@
-//
-// Created by samar on 07.05.2026.
-//
+#pragma once
 
-#ifndef PROJECTC_2_SEM_SHADER_HPP
-#define PROJECTC_2_SEM_SHADER_HPP
+#include <string>
+#include <glad/glad.h>
 
-#endif //PROJECTC_2_SEM_SHADER_HPP
+class Shader
+{
+public:
+    // ID шейдерной программы
+    unsigned int ID;
+
+    // Конструктор: загружает и компилирует шейдеры
+    Shader(const std::string& vertexPath, const std::string& fragmentPath);
+
+    // Активировать shader
+    void use() const;
+
+    // Uniform функции
+
+    void setFloat(const std::string& name, float value) const;
+    void setVec3(const std::string& name, float x, float y, float z) const;
+    void setMat4(const std::string& name, const float* mat) const;
+};
