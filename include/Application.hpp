@@ -26,16 +26,23 @@ private:
     ParticleSystem* particleSystem;
     VelocityVerletIntegrator integrator;
 
+    Real lastMouseX;
+    Real lastMouseY;
+    bool firstMouse;
+
 private:
     bool initGLFW();
     bool createWindow();
     bool initGLAD();
 
-    void processInput();
-    void update(double dt);
+    void processInput(Real dt);
+    void update(Real dt);
     void render();
 
     void shutdown();
+
+    static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
+    static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
 public:
     Application(int width, int height, const std::string& title);
