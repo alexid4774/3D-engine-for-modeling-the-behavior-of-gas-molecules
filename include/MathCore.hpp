@@ -4,7 +4,9 @@
 #include <iostream>
 #include <cmath>
 
+
 using Real = float;
+
 
 class Math {
 public:
@@ -17,6 +19,7 @@ public:
     static bool isNearlyZero(Real x);
     static bool isNearlyEqual(Real a, Real b);
 };
+
 
 class Vec3 {
 public:
@@ -58,6 +61,7 @@ public:
     void print() const;
 };
 
+
 class Displacement {
 private:
     Vec3 delta;
@@ -73,6 +77,7 @@ public:
 
     static Displacement between(const Vec3& from, const Vec3& to);
 };
+
 
 class PeriodicBox {
 private:
@@ -93,6 +98,7 @@ public:
 
     Displacement periodicDisplacement(const Vec3& from, const Vec3& to) const;
 };
+
 
 class Mat4 {
 private:
@@ -128,6 +134,7 @@ public:
 
     void print() const;
 };
+
 
 class AABB {
 private:

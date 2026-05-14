@@ -1,7 +1,7 @@
 #include "Integrator.hpp"
 
 
-void EulerIntegrator::step(ParticleSystem& system, double dt) {
+void EulerIntegrator::step(ParticleSystem& system, float dt) {
     std::vector<Particle>& particles = system.getParticles();
 
     for (auto& p : particles) {
@@ -14,7 +14,7 @@ void EulerIntegrator::step(ParticleSystem& system, double dt) {
 }
 
 
-void VelocityVerletIntegrator::step(ParticleSystem& system, double dt) {
+void VelocityVerletIntegrator::step(ParticleSystem& system, float dt) {
     std::vector<Particle>& particles = system.getParticles();
     std::vector<Vec3> oldAccelerations;
     oldAccelerations.reserve(particles.size());
@@ -37,7 +37,7 @@ void VelocityVerletIntegrator::step(ParticleSystem& system, double dt) {
 }
 
 
-void LeapfrogIntegrator::step(ParticleSystem& system, double dt) {
+void LeapfrogIntegrator::step(ParticleSystem& system, float dt) {
     std::vector<Particle>& particles = system.getParticles();
 
     for (auto& p : particles) {
