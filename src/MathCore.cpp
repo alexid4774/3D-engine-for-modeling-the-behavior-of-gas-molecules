@@ -3,7 +3,7 @@
 #include <cmath>
 #include <cassert>
 
-using Real = double;
+using Real = float;
 
 class Math {
 public:

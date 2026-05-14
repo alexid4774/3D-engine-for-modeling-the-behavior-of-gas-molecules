@@ -1,16 +1,17 @@
 #include "../include/Application.hpp"
-
 #include <iostream>
-
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
-Application::Application(int width, int height, const std::string& title) : window(nullptr), width(width),
-      height(height), title(title), isRunning(false) {}
+
+Application::Application(int width, int height, const std::string& title) : window(nullptr), width(width), height(height),
+      title(title), isRunning(false), shader(nullptr), particleSystem(nullptr) {}
+
 
 Application::~Application() {
     shutdown();
 }
+
 
 bool Application::init() {
     if (!initGLFW()) {
@@ -30,8 +31,29 @@ bool Application::init() {
     isRunning = true;
     std::cout << "Application initialized successfully\n";
 
+    shader = new Shader(
+    "assets/shaders/particle.vert",
+    "assets/shaders/particle.frag");
+
+    if (!renderer.init()) {
+        std::cerr << "Failed to initialize renderer\n";
+        return false;
+    }
+
+    particleSystem = new ParticleSystem(
+        200,    // count
+        1.0f,   // mass
+        10.0f,  // boxSize
+        1.0f,   // v_max
+        1.0f,   // epsilon
+        1.0f    // sigma
+    );
+
+    particleSystem->computeForces();
+
     return true;
 }
+
 
 bool Application::initGLFW() {
     if (!glfwInit()) {
@@ -49,6 +71,7 @@ bool Application::initGLFW() {
 
     return true;
 }
+
 
 bool Application::createWindow() {
     window = glfwCreateWindow(width, height, title.c_str(), nullptr, nullptr);
@@ -69,6 +92,7 @@ bool Application::createWindow() {
     return true;
 }
 
+
 bool Application::initGLAD() {
     if (!gladLoadGL(glfwGetProcAddress)) {
         std::cerr << "Failed to initialize GLAD\n";
@@ -77,6 +101,7 @@ bool Application::initGLAD() {
 
     return true;
 }
+
 
 void Application::run() {
     double lastTime = glfwGetTime();
@@ -94,24 +119,63 @@ void Application::run() {
     }
 }
 
+
 void Application::processInput() {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
         glfwSetWindowShouldClose(window, true);
     }
 }
 
+
 void Application::update(double dt) {
-    // integrator.step(particleSystem, dt);
+    if (particleSystem) {
+        integrator.step(*particleSystem, static_cast<float>(dt));
+    }
 }
+
 
 void Application::render() {
     glClearColor(0.02f, 0.02f, 0.04f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    // renderer.render(particleSystem);
+    if (!shader || !particleSystem) {
+        return;
+    }
+
+    Mat4 model = Mat4::identity();
+
+    Mat4 view = camera.getViewMatrix();
+
+    Mat4 projection = Mat4::perspective(
+        Math::PI / 4.0f,
+        static_cast<Real>(width) / static_cast<Real>(height),
+        0.1f,
+        100.0f
+    );
+
+    shader->use();
+    shader->setMat4("model", model);
+    shader->setMat4("view", view);
+    shader->setMat4("projection", projection);
+    shader->setVec3("particleColor", 0.2f, 0.8f, 1.0f);
+
+    renderer.renderParticles(*particleSystem, *shader);
 }
 
+
 void Application::shutdown() {
+    renderer.shutdown();
+
+    if (shader) {
+        delete shader;
+        shader = nullptr;
+    }
+
+    if (particleSystem) {
+        delete particleSystem;
+        particleSystem = nullptr;
+    }
+
     if (window) {
         glfwDestroyWindow(window);
         window = nullptr;
