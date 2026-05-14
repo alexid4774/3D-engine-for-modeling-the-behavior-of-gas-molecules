@@ -1,4 +1,4 @@
-#include "../include/Integrator.hpp"
+#include "Integrator.hpp"
 
 
 void EulerIntegrator::step(ParticleSystem& system, double dt) {

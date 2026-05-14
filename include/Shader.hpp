@@ -2,9 +2,7 @@
 #pragma once
 
 #include <string>
-
 #include <glad/gl.h>
-
 #include "MathCore.hpp"
 
 class Shader

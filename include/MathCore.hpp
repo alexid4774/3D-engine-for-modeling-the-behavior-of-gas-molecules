@@ -1,22 +1,22 @@
 #pragma once
 
+#include <stdexcept>
+#include <iostream>
+#include <cmath>
 
-using Real = double;
-
+using Real = float;
 
 class Math {
 public:
-    static constexpr Real EPSILON = 1e-9;
-    static constexpr Real SMALL_VALUE = 1e-12;
-    static constexpr Real PI = 3.141592653589793;
+    static constexpr Real EPSILON = 1e-9f;
+    static constexpr Real SMALL_VALUE = 1e-12f;
+    static constexpr Real PI = 3.141592653589793f;
 
     static Real square(Real x);
     static Real clamp(Real value, Real minVal, Real maxVal);
-
     static bool isNearlyZero(Real x);
     static bool isNearlyEqual(Real a, Real b);
 };
-
 
 class Vec3 {
 public:
@@ -58,8 +58,6 @@ public:
     void print() const;
 };
 
-Vec3 operator*(Real scalar, const Vec3& v);
-
 class Displacement {
 private:
     Vec3 delta;
@@ -70,13 +68,11 @@ public:
     Displacement(const Vec3& delta_);
 
     const Vec3& getDelta() const;
-
     Real getDistanceSquared() const;
     Real getDistance() const;
 
     static Displacement between(const Vec3& from, const Vec3& to);
 };
-
 
 class PeriodicBox {
 private:
@@ -90,7 +86,6 @@ public:
     void setSize(const Vec3& newSize);
 
     Real minimalImage1D(Real dx, Real boxLength) const;
-
     Vec3 applyMinimalImage(const Vec3& delta) const;
 
     Real wrapCoordinate(Real value, Real boxLength) const;
@@ -99,37 +94,40 @@ public:
     Displacement periodicDisplacement(const Vec3& from, const Vec3& to) const;
 };
 
-
 class Mat4 {
+private:
+    Real m[16];
+
 public:
-    Real m[4][4];
-
     Mat4();
-    Mat4(Real mat[4][4]);
 
-    void set_cord(Real g, int index_str, int index_stl);
+    Real& at(int row, int col);
+    const Real& at(int row, int col) const;
 
-    Mat4 translation(const Vec3& t);
-    Mat4 scale(const Vec3& s);
+    const Real* data() const;
+    Real* data();
 
-    Mat4 rotationX(Real angle);
-    Mat4 rotationY(Real angle);
-    Mat4 rotationZ(Real angle);
+    static Mat4 identity();
+    static Mat4 translation(const Vec3& t);
+    static Mat4 scale(const Vec3& s);
+
+    static Mat4 rotationX(Real angle);
+    static Mat4 rotationY(Real angle);
+    static Mat4 rotationZ(Real angle);
+
+    static Mat4 perspective(Real fov, Real aspect, Real nearPlane, Real farPlane);
+    static Mat4 lookAt(const Vec3& eye, const Vec3& target, const Vec3& up);
 
     Mat4 operator*(const Mat4& other) const;
 
-    Mat4 perspective(Real fov, Real aspect, Real near, Real far);
-    Mat4 lookAt(const Vec3& eye, const Vec3& target, const Vec3& up);
-
-    void print() const;
-
-    Mat4 makeModelMatrix(
+    static Mat4 makeModelMatrix(
         const Vec3& position,
         const Vec3& rotation,
-        const Vec3& scale
+        const Vec3& scaleVec
     );
-};
 
+    void print() const;
+};
 
 class AABB {
 private:

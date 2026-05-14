@@ -6,6 +6,7 @@
 
 using Real = float;
 
+
 class Math {
 public:
     static constexpr Real EPSILON = 1e-9;

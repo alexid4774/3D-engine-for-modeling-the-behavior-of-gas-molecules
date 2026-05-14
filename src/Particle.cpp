@@ -1,8 +1,8 @@
 #include <iostream>
 #include <vector>
 #include <random>
-#include "../include/MathCore.hpp"
-#include "../include/Integrator.hpp"
+#include "MathCore.hpp"
+#include "Integrator.hpp"
 
 
 std::mt19937 gen(42);
