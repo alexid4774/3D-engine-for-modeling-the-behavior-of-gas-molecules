@@ -16,8 +16,13 @@ bool Renderer::init() {
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
     glBufferData(GL_ARRAY_BUFFER, 0, nullptr, GL_DYNAMIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)0);
     glEnableVertexAttribArray(0);
+
+    // скорость
+    glVertexAttribPointer(1, 1, GL_FLOAT, GL_FALSE, 4 * sizeof(float), (void*)(3 * sizeof(float)));
+    glEnableVertexAttribArray(1);
+
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
 
@@ -27,17 +32,27 @@ bool Renderer::init() {
 void Renderer::renderParticles(const ParticleSystem& system, Shader& shader) {
     const std::vector<Particle>& particles = system.getParticles();
 
-    std::vector<float> positions;
-    positions.reserve(particles.size() * 3);
+    std::vector<float> data;
+    data.reserve(particles.size() * 4);
 
-    for (const auto& p : particles) { positions.push_back(static_cast<float>(p.position.x));
-        positions.push_back(static_cast<float>(p.position.y)); positions.push_back(static_cast<float>(p.position.z));}
+    for (const auto& p : particles) {
+        float speed = p.velocity.length();
+
+        data.push_back(static_cast<float>(p.position.x));
+        data.push_back(static_cast<float>(p.position.y));
+        data.push_back(static_cast<float>(p.position.z));
+        data.push_back(speed);
+    }
 
     shader.use();
     glPointSize(pointSize);
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(float), positions.data(), GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(float), data.data(), GL_DYNAMIC_DRAW);
+    
+    shader.use();
+
+    shader.setFloat("pointScale", pointSize);
     glDrawArrays(GL_POINTS, 0, static_cast<int>(particles.size()));
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
