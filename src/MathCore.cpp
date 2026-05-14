@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cmath>
 #include <cassert>
+#include <MathCore.hpp>
 
 using Real = float;
 
