@@ -8,6 +8,7 @@
 
 class Renderer {
 private:
+    unsigned int cubeVAO, cubeVBO, cubeEBO;
     unsigned int VAO;
     unsigned int VBO;
 
@@ -16,6 +17,8 @@ private:
 public:
     Renderer();
     ~Renderer();
+
+    void renderBounds(Shader& shader, float boxSize);
 
     bool init();
     void renderParticles(const ParticleSystem& system, Shader& shader);

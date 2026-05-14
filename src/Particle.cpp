@@ -27,7 +27,9 @@ Particle createParticle(Vec3 position, Vec3 velocity, float mass) {
 Vec3 randomPosition(float boxSize) {
     std::uniform_real_distribution<float> dist(0, boxSize);
 
-    return Vec3(dist(gen), dist(gen), dist(gen));
+    float half = boxSize * 0.5f;
+
+    return Vec3(dist(gen) - half, dist(gen) - half, dist(gen) - half);
 }
 
 
@@ -106,14 +108,19 @@ void ParticleSystem::integrate(float dt) {
 void ParticleSystem::applyBoundaries() {
     for (auto& p : this->particles) {
 
-        if (p.position.x > this->boxSize) p.position.x -= this->boxSize;
-        else if (p.position.x < 0) p.position.x += this->boxSize;
+        float half = boxSize * 0.5f;
 
-        if (p.position.y > this->boxSize) p.position.y -= this->boxSize;
-        else if (p.position.y < 0) p.position.y += this->boxSize;
+        p.position.x = std::fmod(p.position.x + half, boxSize);
+        if (p.position.x < 0) p.position.x += boxSize;
+        p.position.x -= half;
 
-        if (p.position.z > this->boxSize) p.position.z -= this->boxSize;
-        else if (p.position.z < 0) p.position.z += this->boxSize;
+        p.position.y = std::fmod(p.position.y + half, boxSize);
+        if (p.position.y < 0) p.position.y += boxSize;
+        p.position.y -= half;
+
+        p.position.z = std::fmod(p.position.z + half, boxSize);
+        if (p.position.z < 0) p.position.z += boxSize;
+        p.position.z -= half;
     }
 }
 
@@ -121,7 +128,7 @@ void ParticleSystem::initParticles(int count, float mass, float boxSize, float v
 
     this->boxSize = boxSize;
     this->particles = createParticles(count, mass, boxSize, v_max);
-    this->cutoff = boxSize / 2.0f;
+    this->cutoff = 2.5f * sigma;
     this->epsilon = epsilon;
     this->sigma = sigma;
     this->mass = mass;

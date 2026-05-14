@@ -52,8 +52,8 @@ bool Application::init() {
         200,    // count
         1.0f,   // mass
         10.0f,  // boxSize
-        1.0f,   // v_max
-        1.0f,   // epsilon
+        10.0f,   // v_max
+        0.5f,   // epsilon
         1.0f    // sigma
     );
 
@@ -161,15 +161,14 @@ void Application::update(Real dt) {
     }
 }
 
-void Application::render() {
-    glClearColor(0.02f, 0.02f, 0.04f, 1.0f);
+void Application::render()
+{
+    glClearColor(0.05f, 0.05f, 0.08f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    if (!shader || !particleSystem) {
+    if (!shader || !particleSystem)
         return;
-    }
 
-    Mat4 model = Mat4::identity();
     Mat4 view = camera.getViewMatrix();
     Mat4 projection = Mat4::perspective(
         Math::PI / 4.0f,
@@ -179,10 +178,14 @@ void Application::render() {
     );
 
     shader->use();
-    shader->setMat4("model", model);
+
     shader->setMat4("view", view);
     shader->setMat4("projection", projection);
-    shader->setVec3("particleColor", 1.0f, 0.0f, 0.0f);
+
+    renderer.renderBounds(*shader, 10.0f);
+
+    Mat4 identity = Mat4::identity();
+    shader->setMat4("model", identity);
 
     renderer.renderParticles(*particleSystem, *shader);
 }
