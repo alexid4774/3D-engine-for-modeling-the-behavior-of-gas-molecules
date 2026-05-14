@@ -11,45 +11,45 @@ struct Particle {
     Vec3 position;
     Vec3 velocity;
     Vec3 force;
-    double mass;
+    float mass;
 
     Particle();
 };
 
-Particle createParticle(Vec3 position, Vec3 velocity, double mass);
+Particle createParticle(Vec3 position, Vec3 velocity, float mass);
 
-Vec3 randomPosition(double boxSize);
-Vec3 randomVelocity(double sigma);
+Vec3 randomPosition(float boxSize);
+Vec3 randomVelocity(float sigma);
 
-std::vector<Particle> createParticles(int count, double mass, double boxSize, double v_max);
+std::vector<Particle> createParticles(int count, float mass, float boxSize, float v_max);
 
 class ParticleSystem {
 private:
     std::vector<Particle> particles;
-    double boxSize;
-    double cutoff;
-    double epsilon;
-    double sigma;
-    double sigma6;
-    double sigma12;
-    double mass;
-    double U_cut;
+    float boxSize;
+    float cutoff;
+    float epsilon;
+    float sigma;
+    float sigma6;
+    float sigma12;
+    float mass;
+    float U_cut;
 
 public:
-    ParticleSystem(int count, double mass, double boxSize, double v_max, double epsilon, double sigma);
+    ParticleSystem(int count, float mass, float boxSize, float v_max, float epsilon, float sigma);
 
     void resetForces();
     void computeForces();
-    void integrate(double dt);
+    void integrate(float dt);
     void applyBoundaries();
-    void initParticles(int count, double mass, double boxSize, double v_max, double epsilon, double sigma);
+    void initParticles(int count, float mass, float boxSize, float v_max, float epsilon, float sigma);
 
     Vec3 computeAverageVelocity() const;
     Vec3 computeSeparation(int i, int j) const;
 
-    double kineticEnergy() const;
-    double potentialEnergy() const;
-    double temperature() const;
+    float kineticEnergy() const;
+    float potentialEnergy() const;
+    float temperature() const;
     std::vector<Particle>& getParticles();
     const std::vector<Particle>& getParticles() const;
     int size() const;

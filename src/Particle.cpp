@@ -1,26 +1,17 @@
-#include <iostream>
 #include <vector>
 #include <random>
 #include "MathCore.hpp"
 #include "Integrator.hpp"
+#include "Particle.hpp"
 
 
 std::mt19937 gen(42);
 
 
-struct Particle {
-
-    Vec3 position;
-    Vec3 velocity;
-    Vec3 force;
-    double mass;
+Particle::Particle() : position(0,0,0), velocity(0,0,0), force(0,0,0), mass(1.0) {}
 
 
-    Particle() : position(0,0,0), velocity(0,0,0), force(0,0,0), mass(1.0) {}
-};
-
-
-Particle createParticle(Vec3 position, Vec3 velocity, double mass) {
+Particle createParticle(Vec3 position, Vec3 velocity, float mass) {
 
     Particle p;
 
@@ -33,21 +24,21 @@ Particle createParticle(Vec3 position, Vec3 velocity, double mass) {
 }
 
 
-Vec3 randomPosition(double boxSize) {
-    std::uniform_real_distribution<double> dist(0, boxSize);
+Vec3 randomPosition(float boxSize) {
+    std::uniform_real_distribution<float> dist(0, boxSize);
 
     return Vec3(dist(gen), dist(gen), dist(gen));
 }
 
 
-Vec3 randomVelocity(double sigma) {
-    std::normal_distribution<double> dist(0.0, sigma);
+Vec3 randomVelocity(float sigma) {
+    std::normal_distribution<float> dist(0.0f, sigma);
 
     return Vec3(dist(gen), dist(gen), dist(gen));
 }
 
 
-std::vector<Particle> createParticles(int count, double mass, double boxSize, double v_max) {
+std::vector<Particle> createParticles(int count, float mass, float boxSize, float v_max) {
     std::vector<Particle> particles;
     particles.reserve(count);
 
@@ -63,196 +54,173 @@ std::vector<Particle> createParticles(int count, double mass, double boxSize, do
 }
 
 
-class ParticleSystem {
 
-private:
+ParticleSystem::ParticleSystem(int count, float mass, float boxSize, float v_max, float epsilon, float sigma) {
+    this->initParticles(count, mass, boxSize, v_max, epsilon, sigma);
+}
 
-    std::vector<Particle> particles;
-    double boxSize;
-    double cutoff;
-    double epsilon;
-    double sigma;
-    double sigma6;
-    double sigma12;
-    double mass;
-    double U_cut;
+void ParticleSystem::resetForces() {
+    for (auto& p : this->particles)
+        p.force = Vec3(0,0,0);
+}
 
-public:
+void ParticleSystem::computeForces() {
 
-    ParticleSystem(int count, double mass, double boxSize, double v_max, double epsilon, double sigma) {
-        this->initParticles(count, mass, boxSize, v_max, epsilon, sigma);
+    resetForces();
+
+    float cutoff2 = this->cutoff * this->cutoff;
+
+
+    for (int i = 0; i < this->particles.size(); i++) {
+        for (int j = i + 1; j < this->particles.size(); j++) {
+
+            Vec3 r = computeSeparation(i, j);
+
+            float r2 = r.lengthSq();
+
+            if (r2 > cutoff2 || r2 < 1e-12) continue;
+
+            float inv_r2 = 1.0f / r2;
+            float inv_r6 = inv_r2 * inv_r2 * inv_r2;
+            float inv_r12 = inv_r6 * inv_r6;
+
+            float forceScalar =
+                24.0f * this->epsilon *
+                (2.0f * this->sigma12 * inv_r12 - this->sigma6 * inv_r6) * inv_r2;
+
+            Vec3 f = r * forceScalar;
+
+            particles[i].force += f;
+            particles[j].force -= f;
+        }
+    }
+}
+
+
+void ParticleSystem::integrate(float dt) {
+    VelocityVerletIntegrator v;
+    v.step(*this, dt);
+}
+
+
+void ParticleSystem::applyBoundaries() {
+    for (auto& p : this->particles) {
+
+        if (p.position.x > this->boxSize) p.position.x -= this->boxSize;
+        else if (p.position.x < 0) p.position.x += this->boxSize;
+
+        if (p.position.y > this->boxSize) p.position.y -= this->boxSize;
+        else if (p.position.y < 0) p.position.y += this->boxSize;
+
+        if (p.position.z > this->boxSize) p.position.z -= this->boxSize;
+        else if (p.position.z < 0) p.position.z += this->boxSize;
+    }
+}
+
+void ParticleSystem::initParticles(int count, float mass, float boxSize, float v_max, float epsilon, float sigma) {
+
+    this->boxSize = boxSize;
+    this->particles = createParticles(count, mass, boxSize, v_max);
+    this->cutoff = boxSize / 2.0f;
+    this->epsilon = epsilon;
+    this->sigma = sigma;
+    this->mass = mass;
+
+    float sigma2 = this->sigma * this->sigma;
+    this->sigma6 = sigma2 * sigma2 * sigma2;
+    this->sigma12 = this->sigma6 * this->sigma6;
+
+    float inv_rcut2 = 1.0f / (this->cutoff * this->cutoff);
+    float inv_rcut6 = inv_rcut2 * inv_rcut2 * inv_rcut2;
+    float inv_rcut12 = inv_rcut6 * inv_rcut6;
+
+    this->U_cut = (this->sigma12 * inv_rcut12 - this->sigma6 * inv_rcut6);
+
+    Vec3 v_avg = computeAverageVelocity();
+
+    for (auto &p: this->particles) {
+        p.velocity -= v_avg;
+    }
+}
+
+Vec3 ParticleSystem::computeAverageVelocity() const {
+
+    Vec3 velocity_avg(0, 0, 0);
+
+    for (auto &p: this->particles) {
+        velocity_avg += p.velocity;
     }
 
-    void resetForces() {
-        for (auto& p : this->particles)
-            p.force = Vec3(0,0,0);
+    return velocity_avg / this->particles.size();
+}
+
+Vec3 ParticleSystem::computeSeparation(int i, int j) const {
+
+    Vec3 r = this->particles[i].position - this->particles[j].position;
+
+    if (r.x >  0.5 * this->boxSize) r.x -= this->boxSize;
+    if (r.x < -0.5 * this->boxSize) r.x += this->boxSize;
+
+    if (r.y >  0.5 * this->boxSize) r.y -= this->boxSize;
+    if (r.y < -0.5 * this->boxSize) r.y += this->boxSize;
+
+    if (r.z >  0.5 * this->boxSize) r.z -= this->boxSize;
+    if (r.z < -0.5 * this->boxSize) r.z += this->boxSize;
+
+    return r;
+}
+
+
+float ParticleSystem::kineticEnergy() const {
+    float velocity_total_Sq = 0;
+
+    for (auto &p: this->particles) {
+        velocity_total_Sq += p.velocity.lengthSq();
     }
 
-    void computeForces() {
-
-        resetForces();
-
-        double cutoff2 = this->cutoff * this->cutoff;
+    return velocity_total_Sq * this->mass * 0.5f;
+}
 
 
-        for (int i = 0; i < this->particles.size(); i++) {
-            for (int j = i + 1; j < this->particles.size(); j++) {
+float ParticleSystem::potentialEnergy() const {
 
-                Vec3 r = computeSeparation(i, j);
+    float cutoff2 = this->cutoff * this->cutoff;
+    float U_p = 0;
 
-                double r2 = r.lengthSq();
+    for (int i = 0; i < this->particles.size(); i++) {
+        for (int j = i + 1; j < this->particles.size(); j++) {
 
-                // --- cutoff ---
-                if (r2 > cutoff2 || r2 < 1e-12) continue;
+            Vec3 r = computeSeparation(i, j);
 
-                double inv_r2 = 1.0 / r2;
-                double inv_r6 = inv_r2 * inv_r2 * inv_r2;
-                double inv_r12 = inv_r6 * inv_r6;
+            float r2 = r.lengthSq();
 
-                // --- Lennard-Jones force scalar ---
-                double forceScalar =
-                    24.0 * this->epsilon *
-                    (2.0 * this->sigma12 * inv_r12 - this->sigma6 * inv_r6) * inv_r2;
+            if (r2 > cutoff2 || r2 < 1e-12) continue;
 
-                // --- force vector ---
-                Vec3 f = r * forceScalar;
+            float inv_r2 = 1.0f / r2;
+            float inv_r6 = inv_r2 * inv_r2 * inv_r2;
+            float inv_r12 = inv_r6 * inv_r6;
 
-                // --- Newton's 3rd law ---
-                particles[i].force += f;
-                particles[j].force -= f;
-            }
+
+            U_p += this->sigma12 * inv_r12 - this->sigma6 * inv_r6 - this->U_cut;
+
         }
     }
 
-    void integrate(double dt) {
-        VelocityVerletIntegrator v;
-        v.step(*this, dt);
-    }
+    return 4.0f * this->epsilon * U_p;
+}
 
+float ParticleSystem::temperature() const {
+    return 2.0f / 3.0f * this->kineticEnergy() / static_cast<float>(this->particles.size() - 1);
+}
 
-    void applyBoundaries() {
-        for (auto& p : this->particles) {
+std::vector<Particle>&  ParticleSystem::getParticles() {
+    return this->particles;
+}
 
-            if (p.position.x > this->boxSize) p.position.x -= this->boxSize;
-            else if (p.position.x < 0) p.position.x += this->boxSize;
+const std::vector<Particle>&  ParticleSystem::getParticles() const {
+    return this->particles;
+}
 
-            if (p.position.y > this->boxSize) p.position.y -= this->boxSize;
-            else if (p.position.y < 0) p.position.y += this->boxSize;
-
-            if (p.position.z > this->boxSize) p.position.z -= this->boxSize;
-            else if (p.position.z < 0) p.position.z += this->boxSize;
-        }
-    }
-
-    // --- Initialization ---
-    void initParticles(int count, double mass, double boxSize, double v_max, double epsilon, double sigma) {
-
-        this->boxSize = boxSize;
-        this->particles = createParticles(count, mass, boxSize, v_max);
-        this->cutoff = boxSize / 2.0;
-        this->epsilon = epsilon;
-        this->sigma = sigma;
-        this->mass = mass;
-
-        double sigma2 = this->sigma * this->sigma;
-        this->sigma6 = sigma2 * sigma2 * sigma2;
-        this->sigma12 = this->sigma6 * this->sigma6;
-
-        double inv_rcut2 = 1.0 / (this->cutoff * this->cutoff);
-        double inv_rcut6 = inv_rcut2 * inv_rcut2 * inv_rcut2;
-        double inv_rcut12 = inv_rcut6 * inv_rcut6;
-
-        this->U_cut = (this->sigma12 * inv_rcut12 - this->sigma6 * inv_rcut6);
-
-        Vec3 v_avg = computeAverageVelocity();
-
-        for (auto &p: this->particles) {
-            p.velocity -= v_avg;
-        }
-    }
-
-    Vec3 computeAverageVelocity() const {
-
-        Vec3 velocity_avg(0, 0, 0);
-
-        for (auto &p: this->particles) {
-            velocity_avg += p.velocity;
-        }
-
-        return velocity_avg / this->particles.size();
-    }
-
-    Vec3 computeSeparation(int i, int j) const {
-
-        Vec3 r = this->particles[i].position - this->particles[j].position;
-
-        // --- Minimum image convention (PBC) ---
-        if (r.x >  0.5 * this->boxSize) r.x -= this->boxSize;
-        if (r.x < -0.5 * this->boxSize) r.x += this->boxSize;
-
-        if (r.y >  0.5 * this->boxSize) r.y -= this->boxSize;
-        if (r.y < -0.5 * this->boxSize) r.y += this->boxSize;
-
-        if (r.z >  0.5 * this->boxSize) r.z -= this->boxSize;
-        if (r.z < -0.5 * this->boxSize) r.z += this->boxSize;
-
-        return r;
-    }
-
-
-    // --- Energy / diagnostics ---
-    double kineticEnergy() const {
-        double velocity_total_Sq = 0;
-
-        for (auto &p: this->particles) {
-            velocity_total_Sq += p.velocity.lengthSq();
-        }
-
-        return velocity_total_Sq * this->mass * 0.5;
-    }
-
-
-        double potentialEnergy() const {
-
-        double cutoff2 = this->cutoff * this->cutoff;
-        double U_p = 0;
-
-        for (int i = 0; i < this->particles.size(); i++) {
-            for (int j = i + 1; j < this->particles.size(); j++) {
-
-                Vec3 r = computeSeparation(i, j);
-
-                double r2 = r.lengthSq();
-
-                // --- cutoff ---
-                if (r2 > cutoff2 || r2 < 1e-12) continue;
-
-                double inv_r2 = 1.0 / r2;
-                double inv_r6 = inv_r2 * inv_r2 * inv_r2;
-                double inv_r12 = inv_r6 * inv_r6;
-
-
-                U_p += this->sigma12 * inv_r12 - this->sigma6 * inv_r6 - this->U_cut;
-
-            }
-        }
-
-        return 4 * this->epsilon * U_p;
-    }
-
-    double temperature() const {
-        return 2.0 / 3.0 * this->kineticEnergy() / (double)(this->particles.size() - 1);
-    }
-
-    // --- Access ---
-    std::vector<Particle>& getParticles() {
-        return this->particles;
-    }
-    const std::vector<Particle>& getParticles() const {
-        return this->particles;
-    }
-
-    int size() const {
-        return particles.size();
-    }
-};
+int ParticleSystem::size() const {
+    return particles.size();
+}
