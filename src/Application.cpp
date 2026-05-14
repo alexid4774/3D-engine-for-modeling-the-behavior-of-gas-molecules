@@ -1,5 +1,5 @@
-#include "../include/Application.hpp"
-#include <iostream>
+#include "Application.hpp"
+
 #include <glad/gl.h>
 #include <GLFW/glfw3.h>
 
@@ -50,6 +50,8 @@ bool Application::init() {
     );
 
     particleSystem->computeForces();
+
+    renderer.setPointSize(8.0f);
 
     return true;
 }
@@ -157,7 +159,7 @@ void Application::render() {
     shader->setMat4("model", model);
     shader->setMat4("view", view);
     shader->setMat4("projection", projection);
-    shader->setVec3("particleColor", 0.2f, 0.8f, 1.0f);
+    shader->setVec3("particleColor", 1.0f, 0.0f, 0.0f);
 
     renderer.renderParticles(*particleSystem, *shader);
 }

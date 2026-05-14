@@ -12,7 +12,7 @@ find_package(glfw3 REQUIRED)
 add_executable(GasEngine 
     src/gl.c
     src/MathCore.cpp
-    src/ParticleSystem.cpp
+    src/Particle.cpp
     src/Integrator.cpp
     src/Shader.cpp
     src/Camera.cpp
