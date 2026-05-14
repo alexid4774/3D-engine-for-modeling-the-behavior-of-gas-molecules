@@ -1,8 +1,9 @@
-#include "Shader.hpp"
+#include "../include/Shader.hpp"
 
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <string>
 
 
 static std::string readFile(const std::string& path)

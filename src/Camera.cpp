@@ -1,5 +1,5 @@
-#include "MathCore.hpp"
-#include "Camera.hpp"
+#include "../include/MathCore.hpp"
+#include "../include/Camera.hpp"
 #include <cmath>
 
 
