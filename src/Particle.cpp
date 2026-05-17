@@ -57,8 +57,8 @@ std::vector<Particle> createParticles(int count, float mass, float boxSize, floa
 
 
 
-ParticleSystem::ParticleSystem(int count, float mass, float boxSize, float v_max, float epsilon, float sigma) {
-    this->initParticles(count, mass, boxSize, v_max, epsilon, sigma);
+ParticleSystem::ParticleSystem(int count, float mass, float boxSize, float v_max, float epsilon, float sigma, int integratorMode) {
+    this->initParticles(count, mass, boxSize, v_max, epsilon, sigma, integratorMode);
 }
 
 void ParticleSystem::resetForces() {
@@ -100,8 +100,16 @@ void ParticleSystem::computeForces() {
 
 
 void ParticleSystem::integrate(float dt) {
-    VelocityVerletIntegrator v;
-    v.step(*this, dt);
+    if (this->integratorMode == 0) {
+        EulerIntegrator v;
+        v.step(*this, dt);
+    } else if (this->integratorMode == 1) {
+        VelocityVerletIntegrator v;
+        v.step(*this, dt);
+    } else if (this->integratorMode == 2) {
+        LeapfrogIntegrator v;
+        v.step(*this, dt);
+    }
 }
 
 
@@ -124,8 +132,10 @@ void ParticleSystem::applyBoundaries() {
     }
 }
 
-void ParticleSystem::initParticles(int count, float mass, float boxSize, float v_max, float epsilon, float sigma) {
+void ParticleSystem::initParticles(int count, float mass, float boxSize, float v_max, float epsilon, float sigma, int integratorMode) {
 
+    gen.seed(42);
+    
     this->boxSize = boxSize;
     this->particles = createParticles(count, mass, boxSize, v_max);
     this->cutoff = 2.5f * sigma;
@@ -148,6 +158,8 @@ void ParticleSystem::initParticles(int count, float mass, float boxSize, float v
     for (auto &p: this->particles) {
         p.velocity -= v_avg;
     }
+
+    this->integratorMode = integratorMode;
 }
 
 Vec3 ParticleSystem::computeAverageVelocity() const {

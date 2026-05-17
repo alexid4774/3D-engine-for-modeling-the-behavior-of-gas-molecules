@@ -8,6 +8,7 @@
 #include "Particle.hpp"
 #include "Integrator.hpp"
 
+
 struct GLFWwindow;
 
 class Application {
@@ -44,10 +45,16 @@ private:
     static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
     static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
+    static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
+    static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+    static void charCallback(GLFWwindow* window, unsigned int c);
+
 public:
     Application(int width, int height, const std::string& title);
     ~Application();
 
     bool init();
     void run();
+
+    bool free_mouse = false;
 };

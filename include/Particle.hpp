@@ -36,13 +36,13 @@ private:
     float U_cut;
 
 public:
-    ParticleSystem(int count, float mass, float boxSize, float v_max, float epsilon, float sigma);
+    ParticleSystem(int count, float mass, float boxSize, float v_max, float epsilon, float sigma, int integratorMode);
 
     void resetForces();
     void computeForces();
     void integrate(float dt);
     void applyBoundaries();
-    void initParticles(int count, float mass, float boxSize, float v_max, float epsilon, float sigma);
+    void initParticles(int count, float mass, float boxSize, float v_max, float epsilon, float sigma, int integratorMode);
 
     Vec3 computeAverageVelocity() const;
     Vec3 computeSeparation(int i, int j) const;
@@ -53,4 +53,5 @@ public:
     std::vector<Particle>& getParticles();
     const std::vector<Particle>& getParticles() const;
     int size() const;
+    int integratorMode;
 };
