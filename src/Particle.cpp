@@ -3,9 +3,11 @@
 #include "MathCore.hpp"
 #include "Integrator.hpp"
 #include "Particle.hpp"
+#include <cmath>
 
 
-std::mt19937 gen(42);
+std::random_device rd;
+std::mt19937 gen(rd());
 
 
 Particle::Particle() : position(0,0,0), velocity(0,0,0), force(0,0,0), mass(1.0) {}
@@ -44,12 +46,32 @@ std::vector<Particle> createParticles(int count, float mass, float boxSize, floa
     std::vector<Particle> particles;
     particles.reserve(count);
 
-    for (int i = 0; i < count; i++) {
+    int n = std::ceil(std::cbrt(count));
+    float spacing = boxSize / n;
 
-        Vec3 position = randomPosition(boxSize);
-        Vec3 velocity = randomVelocity(v_max / 3);
+    std::normal_distribution<float> velDist(0.0f, v_max / 3.0f);
 
-        particles.push_back(createParticle(position, velocity, mass));
+    for (int x = 0; x < n; x++) {
+        for (int y = 0; y < n; y++) {
+            for (int z = 0; z < n; z++) {
+
+                if (particles.size() >= count) break;
+
+                Vec3 pos(
+                    (x + 0.5f) * spacing - boxSize * 0.5f,
+                    (y + 0.5f) * spacing - boxSize * 0.5f,
+                    (z + 0.5f) * spacing - boxSize * 0.5f
+                );
+
+                Vec3 vel(
+                    velDist(gen),
+                    velDist(gen),
+                    velDist(gen)
+                );
+
+                particles.push_back(createParticle(pos, vel, mass));
+            }
+        }
     }
 
     return particles;
@@ -242,4 +264,8 @@ const std::vector<Particle>&  ParticleSystem::getParticles() const {
 
 int ParticleSystem::size() const {
     return particles.size();
+}
+
+float ParticleSystem::getBoxSize() const {
+    return this->boxSize;
 }

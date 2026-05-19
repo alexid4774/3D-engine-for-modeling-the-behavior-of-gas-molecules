@@ -191,9 +191,9 @@ void Application::update(Real dt) {
 void Application::render()
 {
     glClearColor(0.05f, 0.05f, 0.08f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
-    glFinish();                                        
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glFinish();
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     if (!shader || !particleSystem)
         return;
@@ -211,7 +211,7 @@ void Application::render()
     shader->setMat4("view", view);
     shader->setMat4("projection", projection);
 
-    renderer.renderBounds(*shader, 10.0f);
+    renderer.renderBounds(*shader, particleSystem->getBoxSize());
 
     Mat4 identity = Mat4::identity();
     shader->setMat4("model", identity);
@@ -234,10 +234,12 @@ void Application::render()
 
         static int particleCount = 40;
         static float v_max = 10.0f;
+        static float boxSize = 10.0f;
         static int integratorMode = 1;
 
         ImGui::InputInt("Parcicle count", &particleCount);
         ImGui::InputFloat("v_max ", &v_max);
+        ImGui::InputFloat("BoxSize", &boxSize);
 
         ImGui::RadioButton("Euler", &integratorMode, 0);
         ImGui::SameLine();
@@ -245,10 +247,18 @@ void Application::render()
         ImGui::SameLine();
         ImGui::RadioButton("LeapFrog", &integratorMode, 2);
 
+        static float moleculeScale = 12.0f;
+        ImGui::SliderFloat("Molecule Size", &moleculeScale, 1.0f, 30.0f);
+        renderer.setPointSize(moleculeScale);
+
         if (ImGui::Button("Reboot")) {
-            particleSystem->initParticles(particleCount, 1.0f, 10.0f, v_max, 0.5f, 1.0f, integratorMode);
+            particleSystem->initParticles(particleCount, 1.0f, boxSize, v_max, 0.5f, 1.0f, integratorMode);
             particleSystem->computeForces();
         }
+
+        ImGui::Text("Kinetic: %.3f", particleSystem->kineticEnergy());
+        ImGui::Text("Potential: %.3f", particleSystem->potentialEnergy());
+        ImGui::Text("Temp: %.3f", particleSystem->temperature());
 
         ImGui::End();
 

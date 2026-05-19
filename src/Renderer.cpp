@@ -138,6 +138,9 @@ void Renderer::renderParticles(const ParticleSystem& system, Shader& shader) {
 
     glPointSize(pointSize);
 
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     glBindVertexArray(VAO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO);
 
@@ -149,6 +152,7 @@ void Renderer::renderParticles(const ParticleSystem& system, Shader& shader) {
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
+
 }
 
 void Renderer::setPointSize(float size) {

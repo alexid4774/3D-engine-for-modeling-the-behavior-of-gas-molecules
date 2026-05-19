@@ -54,4 +54,5 @@ public:
     const std::vector<Particle>& getParticles() const;
     int size() const;
     int integratorMode;
+    float getBoxSize() const;
 };
