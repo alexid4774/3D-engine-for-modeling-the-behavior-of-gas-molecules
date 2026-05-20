@@ -1,10 +1,53 @@
-Project Idea: development of an engine for simulating the behavior of gas molecules in three-dimensional space based on the Lennard-Jones potential
+# Molecular Gas Simulation Engine
 
-=================================================================================================================================
+3D molecular dynamics simulation using the Lennard-Jones potential.
 
-Team Members: Sidoryak Alexander, Poskrebyshev Vsevolod, Samarov Vladimir
+---
 
-=================================================================================================================================
+## Features
 
-Repository: https://github.com/alexid4774/3D-engine-for-modeling-the-behavior-of-gas-molecules
+- Lennard-Jones interactions
+- Velocity Verlet integration
+- Periodic boundary conditions
+- OpenGL visualization
+- Real-time simulation
+- Camera system
+- Custom math library
 
+---
+
+## Technologies
+
+- C++17
+- OpenGL 3.3
+- GLFW
+- GLAD
+
+---
+
+## Simulation
+
+The engine simulates particles interacting through the Lennard-Jones potential:
+U(r) = 4ε[(σ/r)^12 - (σ/r)^6]
+
+---
+
+## Project Structure
+
+include/
+src/
+assets/
+build/
+
+---
+
+## Team
+
+Sidoryak Alexander, Poskrebyshev Vsevolod, Samarov Vladimir
+
+---
+
+## Build
+
+cmake -S . -B build
+cmake --build build
