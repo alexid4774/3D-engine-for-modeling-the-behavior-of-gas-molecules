@@ -58,4 +58,6 @@ public:
     void run();
 
     bool free_mouse = false;
+
+    Real previous_time=0.0;
 };

@@ -129,16 +129,21 @@ bool Application::initGLAD() {
 }
 
 void Application::run() {
-    Real lastTime = glfwGetTime();
+    this->previous_time = glfwGetTime();
     while (isRunning && !glfwWindowShouldClose(window)) {
 
-        processInput(static_cast<Real>(dt));
+        Real lastTime = glfwGetTime();
+        Real dt_old = lastTime - this->previous_time;
+        processInput(static_cast<Real>(dt_old));
         update(dt);
         render();
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+        this->previous_time = lastTime;
     }
+    
+    
 }
 
 void Application::processInput(Real dt) {
