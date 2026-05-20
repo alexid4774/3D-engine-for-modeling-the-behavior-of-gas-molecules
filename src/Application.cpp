@@ -73,6 +73,7 @@ bool Application::init() {
 
     particleSystem->computeForces();
     renderer.setPointSize(8.0f);
+    dt = 0.01;
 
     return true;
 }
@@ -130,9 +131,6 @@ bool Application::initGLAD() {
 void Application::run() {
     Real lastTime = glfwGetTime();
     while (isRunning && !glfwWindowShouldClose(window)) {
-        Real currentTime = glfwGetTime();
-        Real dt = currentTime - lastTime;
-        lastTime = currentTime;
 
         processInput(static_cast<Real>(dt));
         update(dt);
@@ -254,6 +252,14 @@ void Application::render()
         if (ImGui::Button("Reboot")) {
             particleSystem->initParticles(particleCount, 1.0f, boxSize, v_max, 0.5f, 1.0f, integratorMode);
             particleSystem->computeForces();
+            float vmax = 0.0f;
+
+            for (auto& p : this->particleSystem->getParticles()) {
+                float v = p.velocity.length();
+                if (v > vmax) vmax = v;
+            }
+
+            this->dt = 0.05f * this->particleSystem->getSigma() / (vmax + 1e-6f);
         }
 
         ImGui::Text("Kinetic: %.3f", particleSystem->kineticEnergy());

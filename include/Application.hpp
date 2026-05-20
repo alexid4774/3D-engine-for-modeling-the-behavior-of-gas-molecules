@@ -30,6 +30,7 @@ private:
     Real lastMouseX;
     Real lastMouseY;
     bool firstMouse;
+    float dt;
 
 private:
     bool initGLFW();

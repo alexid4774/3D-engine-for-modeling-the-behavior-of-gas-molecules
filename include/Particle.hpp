@@ -55,4 +55,5 @@ public:
     int size() const;
     int integratorMode;
     float getBoxSize() const;
+    float getSigma() const;
 };

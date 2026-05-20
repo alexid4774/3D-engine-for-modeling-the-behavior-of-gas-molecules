@@ -102,15 +102,18 @@ void ParticleSystem::computeForces() {
 
             float r2 = r.lengthSq();
 
-            if (r2 > cutoff2 || r2 < 1e-12) continue;
+            if (r2 > cutoff2) continue;
+
+            float eps2 = 0.01f * sigma * sigma;
+            r2 += eps2;
 
             float inv_r2 = 1.0f / r2;
             float inv_r6 = inv_r2 * inv_r2 * inv_r2;
             float inv_r12 = inv_r6 * inv_r6;
 
             float forceScalar =
-                24.0f * this->epsilon *
-                (2.0f * this->sigma12 * inv_r12 - this->sigma6 * inv_r6) * inv_r2;
+                24.0f * epsilon *
+                (2.0f * sigma12 * inv_r12 - sigma6 * inv_r6) * inv_r2;
 
             Vec3 f = r * forceScalar;
 
@@ -268,4 +271,8 @@ int ParticleSystem::size() const {
 
 float ParticleSystem::getBoxSize() const {
     return this->boxSize;
+}
+
+float ParticleSystem::getSigma() const {
+    return this->sigma;
 }
