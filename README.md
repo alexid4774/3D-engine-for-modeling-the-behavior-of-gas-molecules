@@ -49,6 +49,6 @@ Sidoryak Alexander, Poskrebyshev Vsevolod, Samarov Vladimir
 
 ## Build
 
-bash```
+```bash
 cmake -S . -B build
 cmake --build build
