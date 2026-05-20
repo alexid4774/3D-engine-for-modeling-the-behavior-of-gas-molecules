@@ -34,10 +34,10 @@ U(r) = 4ε[(σ/r)^12 - (σ/r)^6]
 
 ## Project Structure
 
-include/
-src/
-assets/
-build/
+- include/
+- src/
+- assets/
+- build/
 
 ---
 
