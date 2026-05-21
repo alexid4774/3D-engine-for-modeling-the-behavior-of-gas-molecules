@@ -34,6 +34,7 @@ private:
     float sigma12;
     float mass;
     float U_cut;
+    float Vmax;
 
 public:
     ParticleSystem(int count, float mass, float boxSize, float v_max, float epsilon, float sigma, int integratorMode);
@@ -56,4 +57,5 @@ public:
     int integratorMode;
     float getBoxSize() const;
     float getSigma() const;
+    float getVmax() const;
 };
