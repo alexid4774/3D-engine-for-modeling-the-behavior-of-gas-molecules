@@ -136,8 +136,9 @@ void Application::run() {
         Real dt_old = lastTime - this->previous_time;
         processInput(static_cast<Real>(dt_old));
         
-        if (this->particleSystem->size() > 100)
+        if (this->particleSystem->size() > 100 || this->particleSystem->getVmax() > 10) {
             update(dt);
+        }
         
         else
             update(dt_old);
