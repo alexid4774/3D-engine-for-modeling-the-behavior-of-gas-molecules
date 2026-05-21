@@ -160,8 +160,7 @@ void ParticleSystem::applyBoundaries() {
 void ParticleSystem::initParticles(int count, float mass, float boxSize, float v_max, float epsilon, float sigma, int integratorMode) {
 
     gen.seed(42);
-
-    this->Vmax = v_max;
+    
     this->boxSize = boxSize;
     this->particles = createParticles(count, mass, boxSize, v_max);
     this->cutoff = 2.5f * sigma;
@@ -276,8 +275,4 @@ float ParticleSystem::getBoxSize() const {
 
 float ParticleSystem::getSigma() const {
     return this->sigma;
-}
-
-float ParticleSystem::getVmax() const {
-    return this->Vmax;
 }

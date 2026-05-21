@@ -131,13 +131,13 @@ bool Application::initGLAD() {
 void Application::run() {
     this->previous_time = glfwGetTime();
     while (isRunning && !glfwWindowShouldClose(window)) {
+
         Real lastTime = glfwGetTime();
         Real dt_old = lastTime - this->previous_time;
         processInput(static_cast<Real>(dt_old));
         
-        if (this->particleSystem->size() > 100 || this->particleSystem->getVmax() > 10) {
+        if (this->particleSystem->size() > 100)
             update(dt);
-        }
         
         else
             update(dt_old);

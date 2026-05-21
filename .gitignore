@@ -3,3 +3,4 @@ build/
 *.exe
 .DS_Store
 imgui/
+.idea
